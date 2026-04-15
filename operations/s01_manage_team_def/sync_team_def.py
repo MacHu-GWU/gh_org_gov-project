@@ -40,6 +40,9 @@ if __name__ == "__main__":
         org,
         desired,
         delete_orphans=False,
-        # plan_mode=True,
-        plan_mode=False,
+        real_run=False,
+        # real_run=True,
+        create_limit=1,
+        update_limit=1,
+        delete_limit=1,
     )

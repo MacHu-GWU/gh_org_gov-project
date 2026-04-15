@@ -115,6 +115,7 @@ class RepoPermSyncResult:
     def execute(
         self,
         org,  # github.Organization.Organization
+        real_run: bool = False,
         delay: float = 0.1,
         add_limit: int | None = None,
         update_limit: int | None = None,
@@ -126,6 +127,8 @@ class RepoPermSyncResult:
         Uses PyGithub to add/update/remove team repository permissions.
 
         :param org: PyGithub ``Organization`` object
+        :param real_run: if ``True``, actually call the GitHub API;
+            if ``False`` (default), only print what would be done
         :param delay: seconds to wait between API calls to avoid rate limiting
         :param add_limit: max number of add operations to execute,
             ``None`` means no limit
@@ -135,22 +138,37 @@ class RepoPermSyncResult:
             ``None`` means no limit
         """
         for ch in self.to_add[:add_limit]:
-            team = org.get_team_by_slug(ch.team_slug)
-            repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
-            team.update_team_repository(repo, permission=ch.new_permission)
-            time.sleep(delay)
+            print(
+                f"  🟢 Add {ch.team_slug} -> {ch.repo_full_name}"
+                f" ({ch.new_permission})"
+            )
+            if real_run:
+                team = org.get_team_by_slug(ch.team_slug)
+                repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
+                team.update_team_repository(repo, permission=ch.new_permission)
+                time.sleep(delay)
 
         for ch in self.to_update[:update_limit]:
-            team = org.get_team_by_slug(ch.team_slug)
-            repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
-            team.update_team_repository(repo, permission=ch.new_permission)
-            time.sleep(delay)
+            print(
+                f"  🟡 Update {ch.team_slug} -> {ch.repo_full_name}"
+                f" ({ch.old_permission!r} -> {ch.new_permission!r})"
+            )
+            if real_run:
+                team = org.get_team_by_slug(ch.team_slug)
+                repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
+                team.update_team_repository(repo, permission=ch.new_permission)
+                time.sleep(delay)
 
         for ch in self.to_remove[:remove_limit]:
-            team = org.get_team_by_slug(ch.team_slug)
-            repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
-            team.remove_from_repos(repo)
-            time.sleep(delay)
+            print(
+                f"  🔴 Remove {ch.team_slug} -> {ch.repo_full_name}"
+                f" (was {ch.old_permission!r})"
+            )
+            if real_run:
+                team = org.get_team_by_slug(ch.team_slug)
+                repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
+                team.remove_from_repos(repo)
+                time.sleep(delay)
 
 
 # --- GraphQL fetch -------------------------------------------------------
@@ -383,7 +401,7 @@ def sync_repo_permissions(
     gh_token: str,
     org,  # github.Organization.Organization
     desired: list[TeamDef],
-    plan_mode: bool = True,
+    real_run: bool = False,
     delay: float = 0.1,
     add_limit: int | None = None,
     update_limit: int | None = None,
@@ -396,16 +414,17 @@ def sync_repo_permissions(
 
     1. Batch-fetch all repos and team permissions via GraphQL
     2. Compare with desired using :func:`plan_sync_repo_permissions`
-    3. If ``plan_mode`` is ``True``, only print the execution plan
-    4. Otherwise, execute the plan via :meth:`RepoPermSyncResult.execute`
+    3. Print the execution plan
+    4. If ``real_run`` is ``True``, execute the plan via
+       :meth:`RepoPermSyncResult.execute`
 
     Only teams in ``desired`` that have ``repo_role`` set participate.
 
     :param gh_token: GitHub personal access token (needed for GraphQL)
     :param org: PyGithub ``Organization`` object (needed for REST writes)
     :param desired: list of desired :class:`TeamDef`
-    :param plan_mode: if ``True``, only pretty-print the execution plan
-        without making any API changes
+    :param real_run: if ``True``, actually call the GitHub API;
+        if ``False`` (default), only print what would be done
     :param delay: seconds to wait between API calls to avoid rate limiting
     :param add_limit: max number of add operations to execute,
         ``None`` means no limit
@@ -419,12 +438,12 @@ def sync_repo_permissions(
     all_repos, current_perms = fetch_repo_team_permissions(gh_token, org_name)
     result = plan_sync_repo_permissions(desired, all_repos, current_perms)
     result.pretty_print()
-    if plan_mode is False:
-        result.execute(
-            org,
-            delay=delay,
-            add_limit=add_limit,
-            update_limit=update_limit,
-            remove_limit=remove_limit,
-        )
+    result.execute(
+        org,
+        real_run=real_run,
+        delay=delay,
+        add_limit=add_limit,
+        update_limit=update_limit,
+        remove_limit=remove_limit,
+    )
     return result

@@ -101,6 +101,7 @@ class TeamSyncResult:
     def execute(
         self,
         org,  # github.Organization.Organization
+        real_run: bool = False,
         delay: float = 0.1,
         create_limit: int | None = None,
         update_limit: int | None = None,
@@ -113,6 +114,8 @@ class TeamSyncResult:
         via ``org.get_team(id)`` for update and delete operations.
 
         :param org: PyGithub ``Organization`` object
+        :param real_run: if ``True``, actually call the GitHub API;
+            if ``False`` (default), only print what would be done
         :param delay: seconds to wait between API calls to avoid rate limiting
         :param create_limit: max number of create operations to execute,
             ``None`` means no limit
@@ -122,18 +125,26 @@ class TeamSyncResult:
             ``None`` means no limit
         """
         for td in self.to_create[:create_limit]:
-            _execute_create(org, td)
-            time.sleep(delay)
+            print(f"  🟢 Create team: {td.name} (slug={td.slug!r})")
+            if real_run:
+                _execute_create(org, td)
+                time.sleep(delay)
 
         for td, existing, changes in self.to_update[:update_limit]:
-            team = org.get_team(existing.team_id)
-            _execute_update(team, td, changes)
-            time.sleep(delay)
+            print(f"  🟡 Update team: {td.name} (slug={td.slug!r}, id={existing.team_id})")
+            for field, (old, new) in changes.items():
+                print(f"    {field}: {old!r} -> {new!r}")
+            if real_run:
+                team = org.get_team(existing.team_id)
+                _execute_update(team, td, changes)
+                time.sleep(delay)
 
         for etd in self.to_delete[:delete_limit]:
-            team = org.get_team(etd.team_id)
-            _execute_delete(team)
-            time.sleep(delay)
+            print(f"  🔴 Delete team: {etd.name} (slug={etd.slug!r}, id={etd.team_id})")
+            if real_run:
+                team = org.get_team(etd.team_id)
+                _execute_delete(team)
+                time.sleep(delay)
 
 
 def _execute_create(
@@ -280,7 +291,7 @@ def sync_teams(
     org,  # github.Organization.Organization
     desired: list[TeamDef],
     delete_orphans: bool = False,
-    plan_mode: bool = True,
+    real_run: bool = False,
     delay: float = 0.1,
     create_limit: int | None = None,
     update_limit: int | None = None,
@@ -293,8 +304,9 @@ def sync_teams(
 
     1. Fetch all existing teams from the org (batch)
     2. Compare with desired definitions using :func:`plan_sync`
-    3. If ``plan_mode`` is ``True``, only print the execution plan
-    4. Otherwise, execute the plan via :meth:`TeamSyncResult.execute`
+    3. Print the execution plan
+    4. If ``real_run`` is ``True``, execute the plan via
+       :meth:`TeamSyncResult.execute`
 
     .. note::
 
@@ -312,8 +324,8 @@ def sync_teams(
             GitHub does NOT prevent deletion of teams associated with repos.
             The repos remain intact but lose the team-based permissions.
 
-    :param plan_mode: if ``True``, only pretty-print the execution plan
-        without making any API changes
+    :param real_run: if ``True``, actually call the GitHub API;
+        if ``False`` (default), only print what would be done
     :param delay: seconds to wait between API calls to avoid rate limiting
     :param create_limit: max number of create operations to execute,
         ``None`` means no limit
@@ -326,12 +338,12 @@ def sync_teams(
     existing = fetch_existing_team_defs(org)
     result = plan_sync(desired, existing, delete_orphans=delete_orphans)
     result.pretty_print()
-    if plan_mode is False:
-        result.execute(
-            org,
-            delay=delay,
-            create_limit=create_limit,
-            update_limit=update_limit,
-            delete_limit=delete_limit,
-        )
+    result.execute(
+        org,
+        real_run=real_run,
+        delay=delay,
+        create_limit=create_limit,
+        update_limit=update_limit,
+        delete_limit=delete_limit,
+    )
     return result

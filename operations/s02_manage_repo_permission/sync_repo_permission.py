@@ -40,13 +40,13 @@ if __name__ == "__main__":
     print(f"Teams with repo_role: {[(td.name, td.repo_role) for td in teams_with_role]}")
     print()
 
-    # Sync — plan_mode=True by default for safety
+    # Sync — real_run=False by default for safety (dry run)
     result = sync_repo_permissions(
         gh_token=config.github_token,
         org=org,
         desired=desired,
-        # plan_mode=True,
-        plan_mode=False,
+        # real_run=False,
+        real_run=True,
         add_limit=1,
         update_limit=1,
         remove_limit=1,
