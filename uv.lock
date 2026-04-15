@@ -292,59 +292,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cookiecutter-pywf-open-source-demo"
-version = "1.0.2"
-source = { editable = "." }
-
-[package.optional-dependencies]
-dev = [
-    { name = "rich" },
-]
-doc = [
-    { name = "docfly" },
-    { name = "furo" },
-    { name = "ipython" },
-    { name = "nbsphinx" },
-    { name = "pygments" },
-    { name = "rstobj" },
-    { name = "sphinx" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-design", version = "0.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "sphinx-design", version = "0.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "sphinx-jinja" },
-]
-mise = [
-    { name = "httpx" },
-    { name = "pygithub" },
-    { name = "tomli", marker = "python_full_version < '3.11'" },
-]
-test = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "docfly", marker = "extra == 'doc'", specifier = "==3.0.3" },
-    { name = "furo", marker = "extra == 'doc'", specifier = "==2024.8.6" },
-    { name = "httpx", marker = "extra == 'mise'", specifier = ">=0.28.0,<1.0.0" },
-    { name = "ipython", marker = "extra == 'doc'", specifier = ">=8.18.1,<8.19.0" },
-    { name = "nbsphinx", marker = "extra == 'doc'", specifier = ">=0.8.12,<1.0.0" },
-    { name = "pygithub", marker = "extra == 'mise'", specifier = ">=2.8.0,<3.0.0" },
-    { name = "pygments", marker = "extra == 'doc'", specifier = ">=2.18.0,<3.0.0" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.2.2,<9.0.0" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=6.0.0,<7.0.0" },
-    { name = "rich", marker = "extra == 'dev'", specifier = ">=13.8.1,<14.0.0" },
-    { name = "rstobj", marker = "extra == 'doc'", specifier = "==2.0.0" },
-    { name = "sphinx", marker = "extra == 'doc'", specifier = ">=7.4.7,<8.0.0" },
-    { name = "sphinx-copybutton", marker = "extra == 'doc'", specifier = ">=0.5.2,<1.0.0" },
-    { name = "sphinx-design", marker = "extra == 'doc'", specifier = ">=0.6.1,<1.0.0" },
-    { name = "sphinx-jinja", marker = "extra == 'doc'", specifier = ">=2.0.2,<3.0.0" },
-    { name = "tomli", marker = "python_full_version < '3.11' and extra == 'mise'", specifier = ">=2.0.0,<3.0.0" },
-]
-provides-extras = ["dev", "test", "doc", "mise"]
-
-[[package]]
 name = "coverage"
 version = "7.13.5"
 source = { registry = "https://pypi.org/simple" }
@@ -594,6 +541,18 @@ wheels = [
 ]
 
 [[package]]
+name = "fire"
+version = "0.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "termcolor" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/00/f8d10588d2019d6d6452653def1ee807353b21983db48550318424b5ff18/fire-0.7.1.tar.gz", hash = "sha256:3b208f05c736de98fb343310d090dcc4d8c78b2a89ea4f32b837c586270a9cbf", size = 88720, upload-time = "2025-08-16T20:20:24.175Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/4c/93d0f85318da65923e4b91c1c2ff03d8a458cbefebe3bc612a6693c7906d/fire-0.7.1-py3-none-any.whl", hash = "sha256:e43fd8a5033a9001e7e2973bab96070694b9f12f2e0ecf96d4683971b5ab1882", size = 115945, upload-time = "2025-08-16T20:20:22.87Z" },
+]
+
+[[package]]
 name = "furo"
 version = "2024.8.6"
 source = { registry = "https://pypi.org/simple" }
@@ -609,12 +568,89 @@ wheels = [
 ]
 
 [[package]]
+name = "gh-org-gov"
+version = "0.1.1"
+source = { editable = "." }
+dependencies = [
+    { name = "prettytable" },
+    { name = "pygithub" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "rich" },
+]
+doc = [
+    { name = "docfly" },
+    { name = "furo" },
+    { name = "ipython" },
+    { name = "nbsphinx" },
+    { name = "pygments" },
+    { name = "rstobj" },
+    { name = "sphinx" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-design", version = "0.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sphinx-design", version = "0.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "sphinx-jinja" },
+]
+mise = [
+    { name = "httpx" },
+    { name = "pygithub" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
+]
+test = [
+    { name = "fire" },
+    { name = "home-secret-toml" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "which-runtime" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "docfly", marker = "extra == 'doc'", specifier = "==3.0.3" },
+    { name = "fire", marker = "extra == 'test'", specifier = ">=0.7.0,<1.0.0" },
+    { name = "furo", marker = "extra == 'doc'", specifier = "==2024.8.6" },
+    { name = "home-secret-toml", marker = "extra == 'test'", specifier = ">=0.2.1,<1.0.0" },
+    { name = "httpx", marker = "extra == 'mise'", specifier = ">=0.28.0,<1.0.0" },
+    { name = "ipython", marker = "extra == 'doc'", specifier = ">=8.18.1,<8.19.0" },
+    { name = "nbsphinx", marker = "extra == 'doc'", specifier = ">=0.8.12,<1.0.0" },
+    { name = "prettytable", specifier = ">=3.17.0,<4.0.0" },
+    { name = "pygithub", specifier = ">=2.8.1,<3.0.0" },
+    { name = "pygithub", marker = "extra == 'mise'", specifier = ">=2.8.0,<3.0.0" },
+    { name = "pygments", marker = "extra == 'doc'", specifier = ">=2.18.0,<3.0.0" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.2.2,<9.0.0" },
+    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=6.0.0,<7.0.0" },
+    { name = "rich", marker = "extra == 'dev'", specifier = ">=13.8.1,<14.0.0" },
+    { name = "rstobj", marker = "extra == 'doc'", specifier = "==2.0.0" },
+    { name = "sphinx", marker = "extra == 'doc'", specifier = ">=7.4.7,<8.0.0" },
+    { name = "sphinx-copybutton", marker = "extra == 'doc'", specifier = ">=0.5.2,<1.0.0" },
+    { name = "sphinx-design", marker = "extra == 'doc'", specifier = ">=0.6.1,<1.0.0" },
+    { name = "sphinx-jinja", marker = "extra == 'doc'", specifier = ">=2.0.2,<3.0.0" },
+    { name = "tomli", marker = "python_full_version < '3.11' and extra == 'mise'", specifier = ">=2.0.0,<3.0.0" },
+    { name = "which-runtime", marker = "extra == 'test'", specifier = ">=0.1.1,<1.0.0" },
+]
+provides-extras = ["dev", "test", "doc", "mise"]
+
+[[package]]
 name = "h11"
 version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/01/ee/02a2c011bdab74c6fb3c75474d40b3052059d95df7e73351460c8588d963/h11-0.16.0.tar.gz", hash = "sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1", size = 101250, upload-time = "2025-04-24T03:35:25.427Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl", hash = "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86", size = 37515, upload-time = "2025-04-24T03:35:24.344Z" },
+]
+
+[[package]]
+name = "home-secret-toml"
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tomli", marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/67/4d/f2358cd295d1fad441e25513969d21a485870bba4cf835e1f4ca603c82be/home_secret_toml-0.2.1.tar.gz", hash = "sha256:1b009aa671b4e65223468952e9e747b88d489f47fcd6c4250afc1386634ee896", size = 16751, upload-time = "2025-12-13T00:52:53.094Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/5d/d0e7b4e31d898dabec6576a863515757719e68e651c8042eec4282d3fa7f/home_secret_toml-0.2.1-py3-none-any.whl", hash = "sha256:965bd67d47f06ace649b3c4ad62711dba7d596470327c725be572b516a995760", size = 16755, upload-time = "2025-12-13T00:52:52.167Z" },
 ]
 
 [[package]]
@@ -1048,6 +1084,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3", size = 69412, upload-time = "2025-05-15T12:30:07.975Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746", size = 20538, upload-time = "2025-05-15T12:30:06.134Z" },
+]
+
+[[package]]
+name = "prettytable"
+version = "3.17.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "wcwidth" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/79/45/b0847d88d6cfeb4413566738c8bbf1e1995fad3d42515327ff32cc1eb578/prettytable-3.17.0.tar.gz", hash = "sha256:59f2590776527f3c9e8cf9fe7b66dd215837cca96a9c39567414cbc632e8ddb0", size = 67892, upload-time = "2025-11-14T17:33:20.212Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/8c/83087ebc47ab0396ce092363001fa37c17153119ee282700c0713a195853/prettytable-3.17.0-py3-none-any.whl", hash = "sha256:aad69b294ddbe3e1f95ef8886a060ed1666a0b83018bbf56295f6f226c43d287", size = 34433, upload-time = "2025-11-14T17:33:19.093Z" },
 ]
 
 [[package]]
@@ -1652,6 +1700,15 @@ wheels = [
 ]
 
 [[package]]
+name = "termcolor"
+version = "3.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/79/cf31d7a93a8fdc6aa0fbb665be84426a8c5a557d9240b6239e9e11e35fc5/termcolor-3.3.0.tar.gz", hash = "sha256:348871ca648ec6a9a983a13ab626c0acce02f515b9e1983332b17af7979521c5", size = 14434, upload-time = "2025-12-29T12:55:21.882Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/33/d1/8bb87d21e9aeb323cc03034f5eaf2c8f69841e40e4853c2627edf8111ed3/termcolor-3.3.0-py3-none-any.whl", hash = "sha256:cf642efadaf0a8ebbbf4bc7a31cec2f9b5f21a9f726f4ccbb08192c9c26f43a5", size = 7734, upload-time = "2025-12-29T12:55:20.718Z" },
+]
+
+[[package]]
 name = "tinycss2"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1777,4 +1834,13 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/0b/02/ae6ceac1baeda530866a85075641cec12989bd8d31af6d5ab4a3e8c92f47/webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923", size = 9721, upload-time = "2017-04-05T20:21:34.189Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f4/24/2a3e3df732393fed8b3ebf2ec078f05546de641fe1b667ee316ec1dcf3b7/webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78", size = 11774, upload-time = "2017-04-05T20:21:32.581Z" },
+]
+
+[[package]]
+name = "which-runtime"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/20/3b/aeaff3895103825093cb7834e82b6491a1b2d5d207db310fbf2cc145140a/which_runtime-0.1.1.tar.gz", hash = "sha256:c2aae9687d7eca2fe309c00afdd4706fdd087460d1c76d267ff7f4ffa14c1337", size = 12382, upload-time = "2025-05-24T19:26:35.802Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fc/5f/cb54a5d257b98ba192eb5ad3cb827fab25d8682ff94362eebe5603c08472/which_runtime-0.1.1-py3-none-any.whl", hash = "sha256:f388ce3fed502831536f8fb2e13485bc652bfc6b0c44b9b69080480904a4bffa", size = 12813, upload-time = "2025-05-24T19:26:34.228Z" },
 ]
