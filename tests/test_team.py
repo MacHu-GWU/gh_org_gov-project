@@ -2,16 +2,17 @@
 
 import pytest
 
-from gh_org_gov.team_def import TeamDef
+from gh_org_gov.team_def import TeamDef, ExistingTeamDef
 from gh_org_gov.team import plan_sync
 
 
 class TestPlanSync:
-    def _make_existing(self) -> list[TeamDef]:
+    @staticmethod
+    def _make_existing() -> list[ExistingTeamDef]:
         return [
-            TeamDef(name="Guardians", description="Admin team"),
-            TeamDef(name="Developers", description="Dev team"),
-            TeamDef(name="Legacy Team", description="Old team"),
+            ExistingTeamDef(name="Guardians", description="Admin team", team_id=101),
+            ExistingTeamDef(name="Developers", description="Dev team", team_id=102),
+            ExistingTeamDef(name="Legacy Team", description="Old team", team_id=103),
         ]
 
     def test_create(self):
@@ -22,7 +23,6 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
-        # result.pretty_print()  # for debug only
 
         assert len(result.to_create) == 1
         assert result.to_create[0].name == "New Team"
@@ -34,11 +34,11 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
-        # result.pretty_print()  # for debug only
 
         assert len(result.to_update) == 1
-        td, changes = result.to_update[0]
+        td, etd, changes = result.to_update[0]
         assert td.name == "Guardians"
+        assert etd.team_id == 101
         assert "description" in changes
         assert changes["description"] == ("Admin team", "Updated description")
 
@@ -49,7 +49,6 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
-        # result.pretty_print()  # for debug only
 
         assert len(result.to_create) == 0
         assert len(result.to_update) == 0
@@ -62,7 +61,6 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing, delete_orphans=False)
-        # result.pretty_print()  # for debug only
 
         assert len(result.to_delete) == 0
 
@@ -73,9 +71,12 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing, delete_orphans=True)
-        # result.pretty_print()  # for debug only
 
-        assert set(result.to_delete) == {"developers", "legacy-team"}
+        slugs = {etd.slug for etd in result.to_delete}
+        assert slugs == {"developers", "legacy-team"}
+        # Verify team_id is carried through
+        ids = {etd.team_id for etd in result.to_delete}
+        assert ids == {102, 103}
 
     def test_update_privacy(self):
         """Changing privacy should be detected."""
@@ -84,10 +85,9 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
-        # result.pretty_print()  # for debug only
 
         assert len(result.to_update) == 1
-        _, changes = result.to_update[0]
+        _, _, changes = result.to_update[0]
         assert "privacy" in changes
         assert changes["privacy"] == ("closed", "secret")
 
@@ -102,10 +102,9 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
-        # result.pretty_print()  # for debug only
 
         assert len(result.to_update) == 1
-        _, changes = result.to_update[0]
+        _, _, changes = result.to_update[0]
         assert "notification_setting" in changes
 
     def test_combined(self):
@@ -116,7 +115,6 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing, delete_orphans=True)
-        # result.pretty_print()  # for debug only
 
         assert len(result.to_create) == 1
         assert result.to_create[0].name == "Brand New Team"
@@ -124,13 +122,13 @@ class TestPlanSync:
         assert len(result.to_update) == 1
         assert result.to_update[0][0].name == "Guardians"
 
-        assert set(result.to_delete) == {"developers", "legacy-team"}
+        slugs = {etd.slug for etd in result.to_delete}
+        assert slugs == {"developers", "legacy-team"}
 
     def test_empty_desired(self):
         """Empty desired with delete_orphans=True should delete all existing."""
         existing = self._make_existing()
         result = plan_sync([], existing, delete_orphans=True)
-        # result.pretty_print()  # for debug only
 
         assert len(result.to_create) == 0
         assert len(result.to_update) == 0
@@ -140,7 +138,7 @@ class TestPlanSync:
         """Empty existing should create all desired."""
         desired = [TeamDef(name="A"), TeamDef(name="B")]
         result = plan_sync(desired, [], delete_orphans=True)
-        # result.pretty_print()  # for debug only
+
         assert len(result.to_create) == 2
         assert len(result.to_update) == 0
         assert len(result.to_delete) == 0

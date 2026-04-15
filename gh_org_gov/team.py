@@ -29,6 +29,7 @@ import time
 import dataclasses
 
 from .team_def import TeamDef
+from .team_def import ExistingTeamDef
 from .team_def import TeamPrivacyEnum
 from .team_def import TeamNotificationSettingEnum
 
@@ -54,8 +55,8 @@ class TeamSyncResult:
     """
 
     to_create: list[TeamDef] = dataclasses.field(default_factory=list)
-    to_update: list[tuple[TeamDef, dict]] = dataclasses.field(default_factory=list)
-    to_delete: list[str] = dataclasses.field(default_factory=list)
+    to_update: list[tuple[TeamDef, ExistingTeamDef, dict]] = dataclasses.field(default_factory=list)
+    to_delete: list[ExistingTeamDef] = dataclasses.field(default_factory=list)
 
     def pretty_print(self):
         """
@@ -87,20 +88,107 @@ class TeamSyncResult:
 
         if self.to_update:
             print(f"🟡 Update ({len(self.to_update)}) ---")
-            for td, changes in self.to_update:
-                print(f"  🟡 {td.name} (slug={td.slug!r})")
+            for td, existing, changes in self.to_update:
+                print(f"  🟡 {td.name} (slug={td.slug!r}, id={existing.team_id})")
                 for field, (old, new) in changes.items():
                     print(f"    {field}: {old!r} -> {new!r}")
 
         if self.to_delete:
             print(f"🔴 Delete ({len(self.to_delete)}) ---")
-            for slug in self.to_delete:
-                print(f"  🔴 {slug}")
+            for etd in self.to_delete:
+                print(f"  🔴 {etd.name} (slug={etd.slug!r}, id={etd.team_id})")
+
+    def execute(
+        self,
+        org,  # github.Organization.Organization
+        delay: float = 0.1,
+    ):
+        """
+        Execute the sync plan against the GitHub API.
+
+        Uses ``team_id`` from :class:`ExistingTeamDef` to get Team objects
+        via ``org.get_team(id)`` for update and delete operations.
+
+        :param org: PyGithub ``Organization`` object
+        :param delay: seconds to wait between API calls to avoid rate limiting
+        """
+        for td in self.to_create:
+            _execute_create(org, td)
+            time.sleep(delay)
+
+        for td, existing, changes in self.to_update:
+            team = org.get_team(existing.team_id)
+            _execute_update(team, td, changes)
+            time.sleep(delay)
+
+        for etd in self.to_delete:
+            team = org.get_team(etd.team_id)
+            _execute_delete(team)
+            time.sleep(delay)
+
+
+def _execute_create(
+    org,  # github.Organization.Organization
+    td: TeamDef,
+):
+    """
+    Create a single team in the GitHub org.
+
+    :param org: PyGithub ``Organization`` object
+    :param td: the team definition to create
+    """
+    kwargs: dict[str, T.Any] = dict(
+        name=td.name,
+        description=td.description,
+        privacy=td.privacy,
+        notification_setting=td.notification_setting,
+    )
+    if td.parent_team_id is not None:
+        kwargs["parent_team_id"] = td.parent_team_id
+    org.create_team(**kwargs)
+
+
+def _execute_update(
+    team,  # github.Team.Team
+    td: TeamDef,
+    changes: dict[str, tuple],
+):
+    """
+    Update a single team's changed fields.
+
+    :param team: PyGithub ``Team`` object to update
+    :param td: the desired team definition
+    :param changes: dict of ``{field: (old_value, new_value)}``
+    """
+    kwargs: dict[str, T.Any] = {}
+    if "name" in changes:
+        kwargs["name"] = td.name
+    if "description" in changes:
+        kwargs["description"] = td.description
+    if "privacy" in changes:
+        kwargs["privacy"] = td.privacy
+    if "notification_setting" in changes:
+        kwargs["notification_setting"] = td.notification_setting
+    if "parent_team_id" in changes:
+        kwargs["parent_team_id"] = td.parent_team_id if td.parent_team_id else ""
+    if kwargs:
+        team.edit(**kwargs)
+
+
+def _execute_delete(
+    team,  # github.Team.Team
+):
+    """
+    Delete a single team.
+
+    :param team: PyGithub ``Team`` object to delete
+    """
+    team.delete()
 
 
 def plan_sync(
     desired: list[TeamDef],
-    existing: list[TeamDef],
+    existing: list[ExistingTeamDef],
     delete_orphans: bool = False,
 ) -> TeamSyncResult:
     """
@@ -119,8 +207,8 @@ def plan_sync(
     existing_by_slug = {td.slug: td for td in existing}
 
     to_create: list[TeamDef] = []
-    to_update: list[tuple[TeamDef, dict]] = []
-    to_delete: list[str] = []
+    to_update: list[tuple[TeamDef, ExistingTeamDef, dict]] = []
+    to_delete: list[ExistingTeamDef] = []
 
     for slug, td in desired_by_slug.items():
         if slug not in existing_by_slug:
@@ -134,12 +222,12 @@ def plan_sync(
                 if desired_val != existing_val:
                     changes[field] = (existing_val, desired_val)
             if changes:
-                to_update.append((td, changes))
+                to_update.append((td, ex, changes))
 
     if delete_orphans:
-        for slug in existing_by_slug:
+        for slug, etd in existing_by_slug.items():
             if slug not in desired_by_slug:
-                to_delete.append(slug)
+                to_delete.append(etd)
 
     return TeamSyncResult(
         to_create=to_create,
@@ -150,17 +238,17 @@ def plan_sync(
 
 def fetch_existing_team_defs(
     org,  # github.Organization.Organization
-) -> list[TeamDef]:
+) -> list[ExistingTeamDef]:
     """
-    Fetch all existing teams from a GitHub org and return them as :class:`TeamDef` list.
+    Fetch all existing teams from a GitHub org.
 
     :param org: PyGithub ``Organization`` object
-    :return: list of :class:`TeamDef` representing the current remote state
+    :return: list of :class:`ExistingTeamDef` with ``team_id`` populated
     """
-    existing: list[TeamDef] = []
+    existing: list[ExistingTeamDef] = []
     for team in org.get_teams():
         existing.append(
-            TeamDef(
+            ExistingTeamDef(
                 name=team.name,
                 description=team.description or "",
                 privacy=team.privacy or TeamPrivacyEnum.closed.value,
@@ -173,6 +261,7 @@ def fetch_existing_team_defs(
                     or TeamNotificationSettingEnum.notifications_enabled.value
                 ),
                 parent_team_id=team.parent.id if team.parent else None,
+                team_id=team.id,
             )
         )
     return existing
@@ -182,6 +271,7 @@ def sync_teams(
     org,  # github.Organization.Organization
     desired: list[TeamDef],
     delete_orphans: bool = False,
+    plan_mode: bool = False,
     delay: float = 0.1,
 ) -> TeamSyncResult:
     """
@@ -191,7 +281,13 @@ def sync_teams(
 
     1. Fetch all existing teams from the org (batch)
     2. Compare with desired definitions using :func:`plan_sync`
-    3. Create / update / delete as needed
+    3. If ``plan_mode`` is ``True``, only print the execution plan
+    4. Otherwise, execute the plan via :meth:`TeamSyncResult.execute`
+
+    .. note::
+
+        GitHub REST API does not support batch team operations.
+        Teams are created / updated / deleted one by one.
 
     :param org: PyGithub ``Organization`` object
     :param desired: list of desired :class:`TeamDef`
@@ -204,53 +300,15 @@ def sync_teams(
             GitHub does NOT prevent deletion of teams associated with repos.
             The repos remain intact but lose the team-based permissions.
 
+    :param plan_mode: if ``True``, only pretty-print the execution plan
+        without making any API changes
     :param delay: seconds to wait between API calls to avoid rate limiting
-    :return: a :class:`TeamSyncResult` describing what was done
+    :return: a :class:`TeamSyncResult` describing what was (or would be) done
     """
-    # --- 1. Fetch existing teams in batch ---
     existing = fetch_existing_team_defs(org)
-
-    # --- 2. Plan ---
     result = plan_sync(desired, existing, delete_orphans=delete_orphans)
-
-    # --- 3. Execute ---
-    # Build slug -> Team object mapping for updates and deletes
-    team_mapping = {team.slug: team for team in org.get_teams()}
-
-    for td in result.to_create:
-        create_kwargs: dict[str, T.Any] = dict(
-            name=td.name,
-            description=td.description,
-            privacy=td.privacy,
-            notification_setting=td.notification_setting,
-        )
-        if td.parent_team_id is not None:
-            create_kwargs["parent_team_id"] = td.parent_team_id
-        org.create_team(**create_kwargs)
-        time.sleep(delay)
-
-    for td, changes in result.to_update:
-        team = team_mapping[td.slug]
-        edit_kwargs: dict[str, T.Any] = {}
-        if "name" in changes:
-            edit_kwargs["name"] = td.name
-        if "description" in changes:
-            edit_kwargs["description"] = td.description
-        if "privacy" in changes:
-            edit_kwargs["privacy"] = td.privacy
-        if "notification_setting" in changes:
-            edit_kwargs["notification_setting"] = td.notification_setting
-        if "parent_team_id" in changes:
-            edit_kwargs["parent_team_id"] = (
-                td.parent_team_id if td.parent_team_id else ""
-            )
-        if edit_kwargs:
-            team.edit(**edit_kwargs)
-            time.sleep(delay)
-
-    for slug in result.to_delete:
-        if slug in team_mapping:
-            team_mapping[slug].delete()
-            time.sleep(delay)
-
+    if plan_mode:
+        result.pretty_print()
+    else:
+        result.execute(org, delay=delay)
     return result
