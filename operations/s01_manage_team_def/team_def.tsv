@@ -1,0 +1,9 @@
+team_name	description	privacy	notification_setting	parent_team_id	description_cn
+Guardians	Administrators with full access and control over all repositories within the organization.	closed	notifications_enabled		管理员, 有删除 Repo 的权限
+Core Architects	Senior developers with write access to all repositories, responsible for major architectural decisions and code reviews.	closed	notifications_enabled		权限较高的开发者, 例如 Tech Manager 和 Tech Lead, 有修改 Repo 大部分 Settings 的权限, 但无法删除 Repo
+Developers	Developers with write access to specific repositories, focused on particular projects or modules within the organization.	closed	notifications_enabled		普通开发者, 一般只有读写权限, 不能修改 Settings
+Observers	Non-developer stakeholders with read-only access to relevant repositories, enabling them to stay informed about project progress and documentation.	secret	notifications_disabled		非开发者, 但需要能访问 Repo 看东西的人
+
+
+
+
