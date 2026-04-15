@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import pytest
+
 from gh_org_gov.team_def import TeamDef
 from gh_org_gov.team_def import TeamPrivacyEnum
 from gh_org_gov.team_def import TeamNotificationSettingEnum
@@ -84,6 +86,20 @@ class TestLoadTeamDefsFromTsv:
         assert td.privacy == "secret"
         assert td.notification_setting == "notifications_disabled"
         assert td.parent_team_id is None
+
+    def test_invalid_privacy_value(self, tmp_path):
+        """Invalid privacy value should raise ValueError."""
+        tsv = tmp_path / "bad.tsv"
+        tsv.write_text("team_name\tprivacy\nMyTeam\tinvalid_value\n")
+        with pytest.raises(ValueError, match="invalid privacy"):
+            load_team_defs_from_tsv(tsv)
+
+    def test_invalid_notification_setting_value(self, tmp_path):
+        """Invalid notification_setting value should raise ValueError."""
+        tsv = tmp_path / "bad.tsv"
+        tsv.write_text("team_name\tnotification_setting\nMyTeam\twrong\n")
+        with pytest.raises(ValueError, match="invalid notification_setting"):
+            load_team_defs_from_tsv(tsv)
 
     def test_extra_columns_ignored(self):
         """Columns not in TEAM_DEF_COL_* constants should be silently ignored."""

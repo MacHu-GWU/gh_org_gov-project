@@ -40,16 +40,6 @@ if __name__ == "__main__":
         org,
         desired,
         delete_orphans=False,
-        plan_mode=True,
+        # plan_mode=True,
+        plan_mode=False,
     )
-
-    # # Report
-    # if result.to_create:
-    #     print(f"Created: {[td.name for td in result.to_create]}")
-    # if result.to_update:
-    #     for td, changes in result.to_update:
-    #         print(f"Updated: {td.name} — {list(changes.keys())}")
-    # if result.to_delete:
-    #     print(f"Deleted: {result.to_delete}")
-    # if not result.to_create and not result.to_update and not result.to_delete:
-    #     print("Already in sync, nothing to do.")

@@ -130,6 +130,11 @@ def load_team_defs_from_tsv(path: T.Union[str, Path]) -> list[TeamDef]:
                 name=row[Col.TEAM_NAME],
             )
             # Optional string fields — use value only if column exists and is non-empty
+            # For enum-backed fields, validate against allowed values
+            _enum_validators: dict[str, type] = {
+                "privacy": TeamPrivacyEnum,
+                "notification_setting": TeamNotificationSettingEnum,
+            }
             for col, field in [
                 (Col.DESCRIPTION, "description"),
                 (Col.PRIVACY, "privacy"),
@@ -137,6 +142,14 @@ def load_team_defs_from_tsv(path: T.Union[str, Path]) -> list[TeamDef]:
             ]:
                 val = row.get(col)
                 if val:
+                    if field in _enum_validators:
+                        valid = {e.value for e in _enum_validators[field]}
+                        if val not in valid:
+                            raise ValueError(
+                                f"Row {reader.line_num}: "
+                                f"invalid {field}={val!r}, "
+                                f"must be one of {sorted(valid)}"
+                            )
                     kwargs[field] = val
             # Optional integer field
             val = row.get(Col.PARENT_TEAM_ID)
