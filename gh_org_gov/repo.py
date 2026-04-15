@@ -116,6 +116,9 @@ class RepoPermSyncResult:
         self,
         org,  # github.Organization.Organization
         delay: float = 0.1,
+        add_limit: int | None = None,
+        update_limit: int | None = None,
+        remove_limit: int | None = None,
     ):
         """
         Execute the sync plan against the GitHub API.
@@ -124,20 +127,26 @@ class RepoPermSyncResult:
 
         :param org: PyGithub ``Organization`` object
         :param delay: seconds to wait between API calls to avoid rate limiting
+        :param add_limit: max number of add operations to execute,
+            ``None`` means no limit
+        :param update_limit: max number of update operations to execute,
+            ``None`` means no limit
+        :param remove_limit: max number of remove operations to execute,
+            ``None`` means no limit
         """
-        for ch in self.to_add:
+        for ch in self.to_add[:add_limit]:
             team = org.get_team_by_slug(ch.team_slug)
             repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
             team.update_team_repository(repo, permission=ch.new_permission)
             time.sleep(delay)
 
-        for ch in self.to_update:
+        for ch in self.to_update[:update_limit]:
             team = org.get_team_by_slug(ch.team_slug)
             repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
             team.update_team_repository(repo, permission=ch.new_permission)
             time.sleep(delay)
 
-        for ch in self.to_remove:
+        for ch in self.to_remove[:remove_limit]:
             team = org.get_team_by_slug(ch.team_slug)
             repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
             team.remove_from_repos(repo)
@@ -376,6 +385,9 @@ def sync_repo_permissions(
     desired: list[TeamDef],
     plan_mode: bool = True,
     delay: float = 0.1,
+    add_limit: int | None = None,
+    update_limit: int | None = None,
+    remove_limit: int | None = None,
 ) -> RepoPermSyncResult:
     """
     Sync GitHub team-repo permissions to match desired definitions.
@@ -395,6 +407,12 @@ def sync_repo_permissions(
     :param plan_mode: if ``True``, only pretty-print the execution plan
         without making any API changes
     :param delay: seconds to wait between API calls to avoid rate limiting
+    :param add_limit: max number of add operations to execute,
+        ``None`` means no limit
+    :param update_limit: max number of update operations to execute,
+        ``None`` means no limit
+    :param remove_limit: max number of remove operations to execute,
+        ``None`` means no limit
     :return: a :class:`RepoPermSyncResult` describing what was (or would be) done
     """
     org_name = org.login
@@ -402,5 +420,11 @@ def sync_repo_permissions(
     result = plan_sync_repo_permissions(desired, all_repos, current_perms)
     result.pretty_print()
     if plan_mode is False:
-        result.execute(org, delay=delay)
+        result.execute(
+            org,
+            delay=delay,
+            add_limit=add_limit,
+            update_limit=update_limit,
+            remove_limit=remove_limit,
+        )
     return result

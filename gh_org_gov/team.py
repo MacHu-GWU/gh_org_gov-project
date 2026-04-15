@@ -102,6 +102,9 @@ class TeamSyncResult:
         self,
         org,  # github.Organization.Organization
         delay: float = 0.1,
+        create_limit: int | None = None,
+        update_limit: int | None = None,
+        delete_limit: int | None = None,
     ):
         """
         Execute the sync plan against the GitHub API.
@@ -111,17 +114,23 @@ class TeamSyncResult:
 
         :param org: PyGithub ``Organization`` object
         :param delay: seconds to wait between API calls to avoid rate limiting
+        :param create_limit: max number of create operations to execute,
+            ``None`` means no limit
+        :param update_limit: max number of update operations to execute,
+            ``None`` means no limit
+        :param delete_limit: max number of delete operations to execute,
+            ``None`` means no limit
         """
-        for td in self.to_create:
+        for td in self.to_create[:create_limit]:
             _execute_create(org, td)
             time.sleep(delay)
 
-        for td, existing, changes in self.to_update:
+        for td, existing, changes in self.to_update[:update_limit]:
             team = org.get_team(existing.team_id)
             _execute_update(team, td, changes)
             time.sleep(delay)
 
-        for etd in self.to_delete:
+        for etd in self.to_delete[:delete_limit]:
             team = org.get_team(etd.team_id)
             _execute_delete(team)
             time.sleep(delay)
@@ -273,6 +282,9 @@ def sync_teams(
     delete_orphans: bool = False,
     plan_mode: bool = True,
     delay: float = 0.1,
+    create_limit: int | None = None,
+    update_limit: int | None = None,
+    delete_limit: int | None = None,
 ) -> TeamSyncResult:
     """
     Sync GitHub org teams to match the desired definitions.
@@ -303,11 +315,23 @@ def sync_teams(
     :param plan_mode: if ``True``, only pretty-print the execution plan
         without making any API changes
     :param delay: seconds to wait between API calls to avoid rate limiting
+    :param create_limit: max number of create operations to execute,
+        ``None`` means no limit
+    :param update_limit: max number of update operations to execute,
+        ``None`` means no limit
+    :param delete_limit: max number of delete operations to execute,
+        ``None`` means no limit
     :return: a :class:`TeamSyncResult` describing what was (or would be) done
     """
     existing = fetch_existing_team_defs(org)
     result = plan_sync(desired, existing, delete_orphans=delete_orphans)
     result.pretty_print()
     if plan_mode is False:
-        result.execute(org, delay=delay)
+        result.execute(
+            org,
+            delay=delay,
+            create_limit=create_limit,
+            update_limit=update_limit,
+            delete_limit=delete_limit,
+        )
     return result
