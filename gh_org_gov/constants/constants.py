@@ -31,3 +31,5 @@ class TeamDefTsvColEnum(enum.StrEnum):
     NOTIFICATION_SETTING = "notification_setting"
     # Optional: integer ID of the parent team, empty or absent means no parent
     PARENT_TEAM_ID = "parent_team_id"
+    # Optional: repository role for org-wide permission (admin/maintain/push/pull)
+    REPO_ROLE = "repo_role"

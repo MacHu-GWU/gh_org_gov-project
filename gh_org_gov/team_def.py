@@ -23,6 +23,7 @@ import dataclasses
 from pathlib import Path
 
 from .constants.constants import TeamDefTsvColEnum
+from .constants.constants import RepositoryRoleEnum
 
 
 class TeamPrivacyEnum(enum.StrEnum):
@@ -71,6 +72,7 @@ class TeamDef:
     privacy: str = dataclasses.field(default=TeamPrivacyEnum.closed.value)
     notification_setting: str = dataclasses.field(default=TeamNotificationSettingEnum.notifications_enabled.value)
     parent_team_id: T.Optional[int] = dataclasses.field(default=None)
+    repo_role: T.Optional[str] = dataclasses.field(default=None)
     # fmt: on
 
     @property
@@ -134,11 +136,13 @@ def load_team_defs_from_tsv(path: T.Union[str, Path]) -> list[TeamDef]:
             _enum_validators: dict[str, type] = {
                 "privacy": TeamPrivacyEnum,
                 "notification_setting": TeamNotificationSettingEnum,
+                "repo_role": RepositoryRoleEnum,
             }
             for col, field in [
                 (Col.DESCRIPTION, "description"),
                 (Col.PRIVACY, "privacy"),
                 (Col.NOTIFICATION_SETTING, "notification_setting"),
+                (Col.REPO_ROLE, "repo_role"),
             ]:
                 val = row.get(col)
                 if val:
