@@ -271,7 +271,7 @@ def sync_teams(
     org,  # github.Organization.Organization
     desired: list[TeamDef],
     delete_orphans: bool = False,
-    plan_mode: bool = False,
+    plan_mode: bool = True,
     delay: float = 0.1,
 ) -> TeamSyncResult:
     """
