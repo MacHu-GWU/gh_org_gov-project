@@ -83,6 +83,22 @@ class TeamDef:
         return self.name.replace(" ", "-").lower()
 
 
+@dataclasses.dataclass
+class ExistingTeamDef(TeamDef):
+    """
+    A :class:`TeamDef` fetched from GitHub, with the remote ``team_id``.
+
+    This subclass carries the extra metadata needed to update or delete
+    a team without re-fetching it from the API.
+
+    :param team_id: the GitHub-assigned integer ID of the team
+    """
+
+    # fmt: off
+    team_id: T.Optional[int] = dataclasses.field(default=None)
+    # fmt: on
+
+
 def load_team_defs_from_tsv(path: T.Union[str, Path]) -> list[TeamDef]:
     """
     Load team definitions from a TSV file.
