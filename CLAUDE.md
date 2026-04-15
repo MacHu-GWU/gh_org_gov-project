@@ -4,7 +4,13 @@ This document guides AI assistants on how to navigate and work with this project
 
 ## Project Overview
 
-**What this project does:** Read `README.rst` for project description and purpose.
+**What this project does:** A toolkit for declarative GitHub Organization governance. It manages Org-level Teams (create/update/delete), syncs Team membership (add Users to Teams), and assigns Teams to Repositories with specific permission roles (admin/maintain/push/pull). The workflow is: define desired state in TSV files or Python code -> compute delta against current GitHub state -> preview (plan mode) or apply changes.
+
+**Key modules:**
+- `gh_org_gov/client.py` - Authenticated GitHub client (PyGithub REST + GraphQL)
+- `gh_org_gov/team_def.py` - Pure data types: `TeamDef`, `ExistingTeamDef`, TSV loader
+- `gh_org_gov/team.py` - Team sync engine: `plan_sync()` (pure logic) + `sync_teams()` (API calls)
+- `gh_org_gov/constants/` - Enums for repository roles, TSV column names
 
 **Project type:** Python package
 
