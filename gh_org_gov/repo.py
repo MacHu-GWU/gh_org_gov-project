@@ -77,6 +77,7 @@ class RepoPermSyncResult:
         """
         Pretty print the sync execution plan.
         """
+        print("--- Repo Permission Sync Plan ---")
         print(
             f"Summary: "
             f"🟢 Add {len(self.to_add)} | "
@@ -86,6 +87,7 @@ class RepoPermSyncResult:
 
         if not self.to_add and not self.to_update and not self.to_remove:
             print("Already in sync, nothing to do.")
+            print("--- End of Repo Permission Sync Plan ---")
             return
 
         if self.to_add:
@@ -112,6 +114,8 @@ class RepoPermSyncResult:
                     f" (was {ch.old_permission!r})"
                 )
 
+        print("--- End of Repo Permission Sync Plan ---")
+
     def execute(
         self,
         org,  # github.Organization.Organization
@@ -137,33 +141,30 @@ class RepoPermSyncResult:
         :param remove_limit: max number of remove operations to execute,
             ``None`` means no limit
         """
-        for ch in self.to_add[:add_limit]:
-            print(
-                f"  🟢 Add {ch.team_slug} -> {ch.repo_full_name}"
-                f" ({ch.new_permission})"
-            )
+        run_emoji = "🚀" if real_run else "🏷️"
+        run_tag = "" if real_run else " [dry run]"
+
+        items = self.to_add[:add_limit] if real_run else self.to_add
+        for ch in items:
+            print(f"  🟢{run_emoji} Add {ch.team_slug} -> {ch.repo_full_name} ({ch.new_permission}){run_tag}")
             if real_run:
                 team = org.get_team_by_slug(ch.team_slug)
                 repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
                 team.update_team_repository(repo, permission=ch.new_permission)
                 time.sleep(delay)
 
-        for ch in self.to_update[:update_limit]:
-            print(
-                f"  🟡 Update {ch.team_slug} -> {ch.repo_full_name}"
-                f" ({ch.old_permission!r} -> {ch.new_permission!r})"
-            )
+        items = self.to_update[:update_limit] if real_run else self.to_update
+        for ch in items:
+            print(f"  🟡{run_emoji} Update {ch.team_slug} -> {ch.repo_full_name} ({ch.old_permission!r} -> {ch.new_permission!r}){run_tag}")
             if real_run:
                 team = org.get_team_by_slug(ch.team_slug)
                 repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])
                 team.update_team_repository(repo, permission=ch.new_permission)
                 time.sleep(delay)
 
-        for ch in self.to_remove[:remove_limit]:
-            print(
-                f"  🔴 Remove {ch.team_slug} -> {ch.repo_full_name}"
-                f" (was {ch.old_permission!r})"
-            )
+        items = self.to_remove[:remove_limit] if real_run else self.to_remove
+        for ch in items:
+            print(f"  🔴{run_emoji} Remove {ch.team_slug} -> {ch.repo_full_name} (was {ch.old_permission!r}){run_tag}")
             if real_run:
                 team = org.get_team_by_slug(ch.team_slug)
                 repo = org.get_repo(ch.repo_full_name.split("/", 1)[1])

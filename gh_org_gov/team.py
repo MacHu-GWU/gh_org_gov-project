@@ -62,6 +62,7 @@ class TeamSyncResult:
         """
         Pretty print the sync execution plan.
         """
+        print("--- Team Sync Plan ---")
         print(
             f"Summary: "
             f"🟢 Create {len(self.to_create)} | "
@@ -71,6 +72,7 @@ class TeamSyncResult:
 
         if not self.to_create and not self.to_update and not self.to_delete:
             print("Already in sync, nothing to do.")
+            print("--- End of Team Sync Plan ---")
             return
 
         if self.to_create:
@@ -98,6 +100,8 @@ class TeamSyncResult:
             for etd in self.to_delete:
                 print(f"  🔴 {etd.name} (slug={etd.slug!r}, id={etd.team_id})")
 
+        print("--- End of Team Sync Plan ---")
+
     def execute(
         self,
         org,  # github.Organization.Organization
@@ -124,23 +128,31 @@ class TeamSyncResult:
         :param delete_limit: max number of delete operations to execute,
             ``None`` means no limit
         """
-        for td in self.to_create[:create_limit]:
-            print(f"  🟢 Create team: {td.name} (slug={td.slug!r})")
+        run_emoji = "🚀" if real_run else "🏷️"
+        run_tag = "" if real_run else " [dry run]"
+
+        items = self.to_create[:create_limit] if real_run else self.to_create
+        for td in items:
+            print(f"  🟢{run_emoji} Create team: {td.name} (slug={td.slug!r}){run_tag}")
             if real_run:
                 _execute_create(org, td)
                 time.sleep(delay)
 
-        for td, existing, changes in self.to_update[:update_limit]:
-            print(f"  🟡 Update team: {td.name} (slug={td.slug!r}, id={existing.team_id})")
-            for field, (old, new) in changes.items():
-                print(f"    {field}: {old!r} -> {new!r}")
+        items = self.to_update[:update_limit] if real_run else self.to_update
+        for td, existing, changes in items:
+            changes_str = ", ".join(
+                f"{field}: {old!r} -> {new!r}"
+                for field, (old, new) in changes.items()
+            )
+            print(f"  🟡{run_emoji} Update team: {td.name} (slug={td.slug!r}, id={existing.team_id}) {changes_str}{run_tag}")
             if real_run:
                 team = org.get_team(existing.team_id)
                 _execute_update(team, td, changes)
                 time.sleep(delay)
 
-        for etd in self.to_delete[:delete_limit]:
-            print(f"  🔴 Delete team: {etd.name} (slug={etd.slug!r}, id={etd.team_id})")
+        items = self.to_delete[:delete_limit] if real_run else self.to_delete
+        for etd in items:
+            print(f"  🔴{run_emoji} Delete team: {etd.name} (slug={etd.slug!r}, id={etd.team_id}){run_tag}")
             if real_run:
                 team = org.get_team(etd.team_id)
                 _execute_delete(team)
