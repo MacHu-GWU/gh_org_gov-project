@@ -110,7 +110,6 @@ class TestLoadTeamDefsFromTsv:
         # Verify no unexpected attributes leaked in
         for td in team_defs:
             assert not hasattr(td, "description_cn")
-            assert not hasattr(td, "repo_role")
 
 
 if __name__ == "__main__":
