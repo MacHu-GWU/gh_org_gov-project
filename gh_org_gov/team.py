@@ -307,8 +307,7 @@ def sync_teams(
     """
     existing = fetch_existing_team_defs(org)
     result = plan_sync(desired, existing, delete_orphans=delete_orphans)
-    if plan_mode:
-        result.pretty_print()
-    else:
+    result.pretty_print()
+    if plan_mode is False:
         result.execute(org, delay=delay)
     return result
