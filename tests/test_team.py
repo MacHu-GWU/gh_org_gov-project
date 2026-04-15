@@ -22,6 +22,7 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
+        # result.pretty_print()  # for debug only
 
         assert len(result.to_create) == 1
         assert result.to_create[0].name == "New Team"
@@ -33,6 +34,7 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
+        # result.pretty_print()  # for debug only
 
         assert len(result.to_update) == 1
         td, changes = result.to_update[0]
@@ -47,6 +49,7 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
+        # result.pretty_print()  # for debug only
 
         assert len(result.to_create) == 0
         assert len(result.to_update) == 0
@@ -59,6 +62,7 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing, delete_orphans=False)
+        # result.pretty_print()  # for debug only
 
         assert len(result.to_delete) == 0
 
@@ -69,6 +73,7 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing, delete_orphans=True)
+        # result.pretty_print()  # for debug only
 
         assert set(result.to_delete) == {"developers", "legacy-team"}
 
@@ -79,6 +84,7 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
+        # result.pretty_print()  # for debug only
 
         assert len(result.to_update) == 1
         _, changes = result.to_update[0]
@@ -96,6 +102,7 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing)
+        # result.pretty_print()  # for debug only
 
         assert len(result.to_update) == 1
         _, changes = result.to_update[0]
@@ -109,6 +116,7 @@ class TestPlanSync:
         ]
         existing = self._make_existing()
         result = plan_sync(desired, existing, delete_orphans=True)
+        # result.pretty_print()  # for debug only
 
         assert len(result.to_create) == 1
         assert result.to_create[0].name == "Brand New Team"
@@ -122,6 +130,7 @@ class TestPlanSync:
         """Empty desired with delete_orphans=True should delete all existing."""
         existing = self._make_existing()
         result = plan_sync([], existing, delete_orphans=True)
+        # result.pretty_print()  # for debug only
 
         assert len(result.to_create) == 0
         assert len(result.to_update) == 0
@@ -131,7 +140,7 @@ class TestPlanSync:
         """Empty existing should create all desired."""
         desired = [TeamDef(name="A"), TeamDef(name="B")]
         result = plan_sync(desired, [], delete_orphans=True)
-
+        # result.pretty_print()  # for debug only
         assert len(result.to_create) == 2
         assert len(result.to_update) == 0
         assert len(result.to_delete) == 0

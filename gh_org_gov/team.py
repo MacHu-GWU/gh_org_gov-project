@@ -57,6 +57,46 @@ class TeamSyncResult:
     to_update: list[tuple[TeamDef, dict]] = dataclasses.field(default_factory=list)
     to_delete: list[str] = dataclasses.field(default_factory=list)
 
+    def pretty_print(self):
+        """
+        Pretty print the sync execution plan.
+        """
+        print(
+            f"Summary: "
+            f"🟢 Create {len(self.to_create)} | "
+            f"🟡 Update {len(self.to_update)} | "
+            f"🔴 Delete {len(self.to_delete)}"
+        )
+
+        if not self.to_create and not self.to_update and not self.to_delete:
+            print("Already in sync, nothing to do.")
+            return
+
+        if self.to_create:
+            print(f"🟢 Create ({len(self.to_create)}) ---")
+            for td in self.to_create:
+                print(f"  🟢 {td.name} (slug={td.slug!r})")
+                if td.description:
+                    print(f"    description: {td.description}")
+                if td.privacy != TeamPrivacyEnum.closed.value:
+                    print(f"    privacy: {td.privacy}")
+                if td.notification_setting != TeamNotificationSettingEnum.notifications_enabled.value:
+                    print(f"    notification_setting: {td.notification_setting}")
+                if td.parent_team_id is not None:
+                    print(f"    parent_team_id: {td.parent_team_id}")
+
+        if self.to_update:
+            print(f"🟡 Update ({len(self.to_update)}) ---")
+            for td, changes in self.to_update:
+                print(f"  🟡 {td.name} (slug={td.slug!r})")
+                for field, (old, new) in changes.items():
+                    print(f"    {field}: {old!r} -> {new!r}")
+
+        if self.to_delete:
+            print(f"🔴 Delete ({len(self.to_delete)}) ---")
+            for slug in self.to_delete:
+                print(f"  🔴 {slug}")
+
 
 def plan_sync(
     desired: list[TeamDef],
@@ -108,6 +148,36 @@ def plan_sync(
     )
 
 
+def fetch_existing_team_defs(
+    org,  # github.Organization.Organization
+) -> list[TeamDef]:
+    """
+    Fetch all existing teams from a GitHub org and return them as :class:`TeamDef` list.
+
+    :param org: PyGithub ``Organization`` object
+    :return: list of :class:`TeamDef` representing the current remote state
+    """
+    existing: list[TeamDef] = []
+    for team in org.get_teams():
+        existing.append(
+            TeamDef(
+                name=team.name,
+                description=team.description or "",
+                privacy=team.privacy or TeamPrivacyEnum.closed.value,
+                notification_setting=(
+                    getattr(
+                        team,
+                        "notification_setting",
+                        TeamNotificationSettingEnum.notifications_enabled.value,
+                    )
+                    or TeamNotificationSettingEnum.notifications_enabled.value
+                ),
+                parent_team_id=team.parent.id if team.parent else None,
+            )
+        )
+    return existing
+
+
 def sync_teams(
     org,  # github.Organization.Organization
     desired: list[TeamDef],
@@ -138,24 +208,7 @@ def sync_teams(
     :return: a :class:`TeamSyncResult` describing what was done
     """
     # --- 1. Fetch existing teams in batch ---
-    existing: list[TeamDef] = []
-    for team in org.get_teams():
-        existing.append(
-            TeamDef(
-                name=team.name,
-                description=team.description or "",
-                privacy=team.privacy or TeamPrivacyEnum.closed.value,
-                notification_setting=(
-                    getattr(
-                        team,
-                        "notification_setting",
-                        TeamNotificationSettingEnum.notifications_enabled.value,
-                    )
-                    or TeamNotificationSettingEnum.notifications_enabled.value
-                ),
-                parent_team_id=team.parent.id if team.parent else None,
-            )
-        )
+    existing = fetch_existing_team_defs(org)
 
     # --- 2. Plan ---
     result = plan_sync(desired, existing, delete_orphans=delete_orphans)

@@ -1,0 +1,5 @@
+team_name	description	privacy	notification_setting	parent_team_id
+Guardians	Administrators with full access and control over all repositories within the organization.	closed	notifications_enabled
+Core Architects	Senior developers with write access to all repositories, responsible for major architectural decisions and code reviews.	closed	notifications_enabled
+Developers	Developers with write access to specific repositories, focused on particular projects or modules within the organization.	closed	notifications_enabled
+Observers	Non-developer stakeholders with read-only access to relevant repositories, enabling them to stay informed about project progress and documentation.	secret	notifications_disabled
